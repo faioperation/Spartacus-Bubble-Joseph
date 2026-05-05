@@ -57,8 +57,6 @@ const loadEnvVars = () => {
     GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
     GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
     GOOGLE_CALLBACK_URL: process.env.GOOGLE_CALLBACK_URL,
-    // Frontend
-    FRONT_END_URL: process.env.FRONT_END_URL,
 
     // AI Engine
     AI_ENGINE_URL: process.env.AI_ENGINE_URL,
