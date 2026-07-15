@@ -1,0 +1,103 @@
+# ==============================================================================
+# SPARTACUS BUBBLE AI AGENT - DOCKER COMPOSE ORCHESTRATOR
+# ==============================================================================
+version: '3.8'
+
+services:
+  # Database Tier
+  postgres:
+    image: postgres:15-alpine
+    container_name: spartacus-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespassword
+      POSTGRES_DB: spartacus
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - spartacus-network
+    restart: unless-stopped
+
+  # Caching Tier
+  redis:
+    image: redis:7-alpine
+    container_name: spartacus-redis
+    volumes:
+      - redisdata:/data
+    networks:
+      - spartacus-network
+    restart: unless-stopped
+
+  # Core Backend Application
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: spartacus-backend
+    environment:
+      - PORT=8080
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://postgres:postgrespassword@postgres:5432/spartacus?schema=public
+      - REDIS_URL=redis://redis:6379
+      - BACKEND_URL=http://backend:8080
+      - AI_ENGINE_URL=http://ai:8000
+    env_file:
+      - .env
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - spartacus-network
+    restart: unless-stopped
+
+  # AI Middleware / Voice AI Engine
+  ai:
+    build:
+      context: ./ai
+      dockerfile: Dockerfile
+    container_name: spartacus-ai
+    environment:
+      - PORT=8000
+      - BACKEND_FORWARD_URL=http://backend:8080/api/new-booking
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    volumes:
+      - ai-bookings:/app/bookings
+      - ai-archive:/app/archive
+    depends_on:
+      - backend
+    networks:
+      - spartacus-network
+    restart: unless-stopped
+
+  # Frontend Static SPA
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: spartacus-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - spartacus-network
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+    driver: local
+  redisdata:
+    driver: local
+  ai-bookings:
+    driver: local
+  ai-archive:
+    driver: local
+
+networks:
+  spartacus-network:
+    driver: bridge

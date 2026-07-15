@@ -22,7 +22,8 @@ def startup_event():
     os.makedirs("archive", exist_ok=True)
 
 
-BACKEND_FORWARD_URL = "https://your-backend-colleague.com/api/new-booking"
+BACKEND_FORWARD_URL = os.getenv("BACKEND_FORWARD_URL", "https://your-backend-colleague.com/api/new-booking")
+
 
 ALLOWED_ACTIVITIES = [
     "Bubble Soccer",
